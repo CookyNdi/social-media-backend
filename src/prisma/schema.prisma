@@ -9,3 +9,105 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Users {
+  id                String      @id @default(cuid())
+  name              String
+  username          String      @unique
+  email             String      @unique
+  password          String
+  bio               String?     @db.VarChar(300)
+  banner_url        String?     @db.Text
+  profile_image_url String?     @db.Text
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  Posts             Posts[]
+  Comments          Comments[]
+  Bookmarks         Bookmarks[]
+  FollowerMutuals   Mutuals[]   @relation("Follower")
+  FollowingMutuals  Mutuals[]   @relation("Following")
+  Liked             Liked[]
+}
+
+model Mutuals {
+  id          String   @id @default(cuid())
+  follower    String
+  following   String
+  createdAt   DateTime @default(now())
+  followerId  Users    @relation(name: "Follower", fields: [follower], references: [id], onDelete: Cascade)
+  followingId Users    @relation(name: "Following", fields: [following], references: [id], onDelete: Cascade)
+}
+
+model Posts {
+  id            String      @id @default(cuid())
+  userId        String
+  content       String      @db.VarChar(300)
+  likes         Int         @default(0)
+  type          String      @default("media")
+  respost_count Int         @default(0)
+  view          Int         @default(0)
+  status        String
+  scheduled     DateTime?
+  is_repost     Boolean     @default(false)
+  repost_id     String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          Users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Comments      Comments[]
+  PostImage     PostImage[]
+  Hastags       Hastags[]
+  Bookmarks     Bookmarks[]
+  Liked         Liked[]
+}
+
+model Liked {
+  userId String
+  postId String
+  user   Users  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post   Posts  @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+}
+
+model Comments {
+  id             String      @id @default(cuid())
+  userId         String
+  postId         String
+  comment        String      @db.Char(300)
+  like           Int         @default(0)
+  view           Int         @default(0)
+  parent_comment String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  user           Users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post           Posts       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  Bookmarks      Bookmarks[]
+}
+
+model PostImage {
+  id        String   @id @default(cuid())
+  postId    String
+  image_url String
+  createdAt DateTime @default(now())
+  post      Posts    @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Hastags {
+  id        String   @id @default(cuid())
+  postId    String
+  tag       String
+  tag_count Int      @default(0)
+  createdAt DateTime @default(now())
+  post      Posts    @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Bookmarks {
+  id        String    @id @default(cuid())
+  userId    String
+  postId    String?
+  commentId String?
+  createdAt DateTime  @default(now())
+  user      Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Posts?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment   Comments? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+}
