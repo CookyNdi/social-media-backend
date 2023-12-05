@@ -1,3 +1,7 @@
 node_modules
 # Keep environment variables out of version control
 .env
+
+#Images
+public/storage/user/banner/*
+public/storage/user/profile-image/*
